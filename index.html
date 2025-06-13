@@ -1,19 +1,57 @@
 <!doctype html>
-<!--[if lt IE 7 ]> <html lang="en" class="ie6"> <![endif]-->
-<!--[if IE 7 ]>    <html lang="en" class="ie7"> <![endif]-->
-<!--[if IE 8 ]>    <html lang="en" class="ie8"> <![endif]-->
-<!--[if IE 9 ]>    <html lang="en" class="ie9"> <![endif]-->
-<!--[if !IE]><!--> <html lang="en"> <!--<![endif]-->
+<html lang="en">
 <head>
 <meta name="viewport" content="width = 1050, user-scalable = no" />
-<script type="text/javascript" src="../../extras/jquery.min.1.7.js"></script>
-<script type="text/javascript" src="../../extras/modernizr.2.5.3.min.js"></script>
+<title>Flipbook</title>
+
+<!-- jQuery & Modernizr -->
+<script type="text/javascript" src="extras/jquery.min.1.7.js"></script>
+<script type="text/javascript" src="extras/modernizr.2.5.3.min.js"></script>
+
+<!-- Basic Styles -->
+<link rel="stylesheet" href="css/basic.css">
+
+<style>
+.controls {
+    display: flex;
+    align-items: center;
+    margin: 15px;
+}
+.controls-center {
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+button, input[type=range] {
+    padding: 8px 12px;
+    font-size: 16px;
+}
+#pageSlider {
+    width: 250px;
+}
+#musicToggle {
+    margin-left: auto; /* keeps music toggle on the right */
+}
+</style>
 </head>
 <body>
 
+<div class="controls">
+    <div class="controls-center">
+        <button id="firstPage">⏮ First</button>
+        <button id="prevPage">◀ Prev</button>
+        <input type="range" id="pageSlider" min="1" max="40" value="1">
+        <button id="nextPage">Next ▶</button>
+        <button id="lastPage">Last ⏭</button>
+    </div>
+    
+</div>
+
 <div class="flipbook-viewport">
-	<div class="container">
-		<div class="flipbook">
+    <div class="container">
+        <div class="flipbook">
+            <!-- Your pages here -->
 			<div style="background-image:url(pages/1.jpg)"></div>
 			<div style="background-image:url(pages/2.jpg)"></div>
 			<div style="background-image:url(pages/3.jpg)"></div>
@@ -54,55 +92,74 @@
 			<div style="background-image:url(pages/38.jpg)"></div>
 			<div style="background-image:url(pages/39.jpg)"></div>
 			<div style="background-image:url(pages/40.jpg)"></div>
-
-
-
-		</div>
-	</div>
+            <!-- ... continue up to page 40 -->
+        </div>
+    </div>
 </div>
 
+<!-- Audio elements -->
+<audio id="pageSound" src="sounds/page-flip.mp3" preload="auto"></audio>
+<audio id="bgMusic" src="sounds/background-music.mp3" preload="auto" loop></audio>
 
-<script type="text/javascript">
-
+<script>
 function loadApp() {
+    const flipbook = $('.flipbook');
+    const pageSlider = document.getElementById('pageSlider');
+    const pageSound = document.getElementById('pageSound');
+    const bgMusic = document.getElementById('bgMusic');
+    const musicToggle = document.getElementById('musicToggle');
 
-	// Create the flipbook
+    flipbook.turn({
+        width: 922,
+        height: 600,
+        elevation: 50,
+        gradients: true,
+        autoCenter: true,
+        when: {
+            turning: function() {
+                pageSound.currentTime = 0;
+                pageSound.play();
+            },
+            turned: function(event, page) {
+                pageSlider.value = page;
+            }
+        }
+    });
 
-	$('.flipbook').turn({
-			// Width
+    // Navigation buttons
+    $('#firstPage').click(() => flipbook.turn('page', 1));
+    $('#prevPage').click(() => flipbook.turn('previous'));
+    $('#nextPage').click(() => flipbook.turn('next'));
+    $('#lastPage').click(() => flipbook.turn('page', flipbook.turn('pages')));
 
-			width:922,
-			
-			// Height
+    // Page slider
+    pageSlider.addEventListener('input', () => {
+        flipbook.turn('page', parseInt(pageSlider.value));
+    });
 
-			height:600,
-
-			// Elevation
-
-			elevation: 50,
-			
-			// Enable gradients
-
-			gradients: true,
-			
-			// Auto center this flipbook
-
-			autoCenter: true
-
-	});
+    // Music toggle
+    let musicOn = false;
+    musicToggle.addEventListener('click', () => {
+        if (musicOn) {
+            bgMusic.pause();
+            musicToggle.textContent = "🔇 Music Off";
+        } else {
+            bgMusic.play();
+            musicToggle.textContent = "🔊 Music On";
+        }
+        musicOn = !musicOn;
+    });
 }
 
-// Load the HTML4 version if there's not CSS transform
-
+// Load scripts depending on CSS support
 yepnope({
-	test : Modernizr.csstransforms,
-	yep: ['../../lib/turn.js'],
-	nope: ['../../lib/turn.html4.min.js'],
-	both: ['css/basic.css'],
-	complete: loadApp
+    test: Modernizr.csstransforms,
+    yep: ['lib/turn.js'],
+    nope: ['lib/turn.html4.min.js'],
+    both: ['css/basic.css'],
+    complete: loadApp
 });
-
 </script>
-
+<button id="musicToggle" class="music-button">🔊 Music On/Off</button>
 </body>
 </html>
